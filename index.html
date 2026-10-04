@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NewsReel Studio Pro — JT sur mesure</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0a0a0a;--panel:#141414;--panel-2:#1f1f1f;--border:#2a2a2a;--ink:#f5f5f5;--ink-dim:#888;--ink-faint:#555;--success:#2d8a4e;--error:#c0392b;--warn:#d4a017;--info:#4a6cf7;--retro:#f59e0b;--purple:#7c3aed;--radius:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:1.5rem 1rem 6rem;font-size:15px;line-height:1.5;max-width:900px;margin:0 auto}
+header{margin-bottom:1.5rem;text-align:center}
+h1{font-size:1.5rem;font-weight:700;margin-bottom:.3rem;color:var(--retro)}
+.subtitle{font-size:.8rem;color:var(--ink-dim);font-style:italic}
+.toast{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--ink);color:var(--bg);padding:.85rem 1.4rem;border-radius:10px;font-size:.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:1000;opacity:0;transition:transform .35s,opacity .35s;max-width:90vw;text-align:center}
+.toast.visible{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{background:var(--success);color:#fff}
+.toast.error{background:var(--error);color:#fff}
+.toast.warn{background:var(--warn);color:#fff}
+.info-banner{background:#1a1a2e;border-left:3px solid var(--retro);padding:.75rem .95rem;border-radius:8px;font-size:.78rem;color:#ccc;margin-bottom:1rem;line-height:1.45}
+.info-banner strong{color:var(--retro)}
+.section{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden}
+.section-header{padding:.9rem 1.1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.section-header:active{background:var(--panel-2)}
+.section-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-dim);font-weight:600}
+.section-title .badge{display:inline-block;margin-left:.4rem;padding:.1rem .4rem;background:var(--retro);color:var(--bg);border-radius:10px;font-size:.65rem}
+.section-header .chevron{font-size:.7rem;color:var(--ink-faint);transition:transform .2s}
+.section.open .section-header .chevron{transform:rotate(180deg)}
+.section-body{max-height:0;overflow:hidden;transition:max-height .3s}
+.section.open .section-body{max-height:10000px}
+.section-content{padding:0 1.1rem 1.1rem}
+.api-panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:1rem}
+.api-panel.ok{border-color:var(--success)}
+.api-key-input{width:100%;padding:.85rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--ink);font-family:ui-monospace,monospace;font-size:.85rem;margin-bottom:.6rem}
+.api-save-btn{width:100%;padding:.8rem;border-radius:8px;border:none;background:var(--retro);color:var(--bg);font-size:.9rem;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:.6rem}
+.api-status-line{font-size:.75rem;padding:.55rem .85rem;border-radius:6px;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem;background:var(--panel-2);color:var(--ink-dim)}
+.api-status-line.ok{background:#1a3a1a;color:var(--success);font-weight:600}
+.api-status-line .status-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-faint);flex-shrink:0}
+.api-status-line.ok .status-dot{background:var(--success)}
+.api-hint{font-size:.72rem;color:var(--ink-dim);margin-top:.4rem}
+.api-hint a{color:var(--retro);text-decoration:underline}
+.control-row{margin-bottom:.9rem}
+.control-label{display:block;font-size:.72rem;color:var(--ink-dim);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+select,input[type="text"],input[type="number"],textarea{width:100%;padding:.7rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--ink);font-family:inherit;font-size:.88rem}
+textarea{min-height:100px;resize:vertical;line-height:1.5}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--retro)}
+.field-group{background:var(--panel-2);border-radius:8px;padding:.8rem;margin-bottom:.8rem;border-left:3px solid var(--retro)}
+.field-group-title{font-size:.7rem;font-weight:700;color:var(--retro);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem}
+.char-block{background:var(--panel);border-radius:8px;padding:.7rem;margin-bottom:.6rem;border:1px solid var(--border)}
+.char-block .char-header{display:flex;gap:.4rem;align-items:center;margin-bottom:.5rem}
+.char-block .char-num{background:var(--retro);color:var(--bg);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
+.char-block .char-name-input{flex:1;padding:.4rem .6rem;font-size:.8rem}
+.char-block .char-remove{background:transparent;border:1px solid var(--border);color:var(--error);padding:.2rem .5rem;border-radius:6px;font-size:.7rem;cursor:pointer;font-family:inherit}
+.scene-block{background:var(--panel);border-radius:8px;padding:.7rem;margin-bottom:.6rem;border:2px solid var(--border);border-left:4px solid var(--purple)}
+.scene-block .scene-header{display:flex;gap:.4rem;align-items:center;margin-bottom:.5rem}
+.scene-block .scene-num{background:var(--purple);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
+.scene-block .scene-title-input{flex:1;padding:.4rem .6rem;font-size:.8rem;font-weight:600}
+.scene-block .scene-remove{background:transparent;border:1px solid var(--border);color:var(--error);padding:.2rem .5rem;border-radius:6px;font-size:.7rem;cursor:pointer;font-family:inherit}
+.dialogue-row{display:flex;gap:.4rem;margin-bottom:.4rem;align-items:flex-start}
+.dialogue-row .dialogue-char{width:110px;padding:.4rem .5rem;font-size:.75rem;flex-shrink:0}
+.dialogue-row .dialogue-text{flex:1;padding:.4rem .5rem;font-size:.75rem;min-height:50px}
+.dialogue-row .dialogue-remove{background:transparent;border:none;color:var(--error);font-size:.9rem;cursor:pointer;padding:.2rem}
+.btn-add{width:100%;padding:.5rem;border:2px dashed var(--border);background:transparent;border-radius:6px;color:var(--ink-dim);font-size:.75rem;cursor:pointer;font-family:inherit;margin-top:.3rem}
+.btn-add:active{border-color:var(--retro);color:var(--retro)}
+.btn-primary{width:100%;padding:1.1rem;border-radius:var(--radius);border:none;background:var(--retro);color:var(--bg);font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:1rem}
+.btn-primary:disabled{opacity:.3;cursor:not-allowed}
+.btn-stop{width:100%;padding:.8rem;border-radius:var(--radius);border:1px solid var(--border);background:var(--panel);color:var(--error);font-size:.85rem;font-weight:600;font-family:inherit;cursor:pointer;margin-bottom:1rem;display:none}
+.btn-stop.visible{display:block}
+.debug-panel{position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;padding:.5rem .8rem;font-family:ui-monospace,monospace;font-size:.68rem;max-height:120px;overflow-y:auto;z-index:100;border-top:1px solid var(--retro);transform:translateY(100%);transition:transform .3s}
+.debug-panel.visible{transform:translateY(0)}
+.debug-panel .log-line{padding:.1rem 0;border-bottom:1px solid #111}
+.debug-panel .log-line.error{color:#f00}
+.debug-panel .log-line.warn{color:#ff0}
+.debug-panel .log-line.success{color:#0f0}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem}
+.gallery-item{border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#000}
+.gallery-item video{width:100%;display:block;aspect-ratio:9/16;object-fit:cover}
+.gallery-item .caption{padding:.4rem .6rem;background:var(--panel);font-size:.68rem;color:var(--ink-dim)}
+</style>
+</head>
+<body>
+<header>
+<h1>📺 NewsReel Studio Pro</h1>
+<p class="subtitle">JT sur mesure — scènes, personnages et tenues illimités</p>
+</header>
+<div class="info-banner">
+<strong>Nouveau :</strong> Scènes <strong>illimitées</strong>, personnages <strong>illimités</strong> par scène, dialogues <strong>multiples</strong>, durées <strong>libres</strong> (5s à 60s). Toutes les tenues existantes sont conservées.
+</div>
+
+<div class="api-panel" id="api-panel">
+<input type="password" class="api-key-input" id="api-key-input" placeholder="Clé API Agnes (sk-...)" autocomplete="off" spellcheck="false">
+<button type="button" class="api-save-btn" id="api-save-btn">Enregistrer la clé Agnes</button>
+<div class="api-status-line" id="api-status-line">
+<span class="status-dot"></span>
+<span id="api-status-text">Aucune clé API enregistrée</span>
+</div>
+<div class="api-hint">Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank">platform.agnes-ai.com</a></div>
+</div>
+
+<div class="section open">
+<div class="section-header" data-toggle="section-article">
+<span class="section-title">📝 Votre article <span class="badge">à écrire</span></span>
+<span class="chevron">▼</span>
+</div>
+<div class="section-body">
+<div class="section-content">
+<div class="control-row">
+<label class="control-label">Titre de l'article</label>
+<input type="text" id="article-title" placeholder="Ex : Une businesswoman en costume cravate impose le respect">
+</div>
+<div class="control-row">
+<label class="control-label">Contenu de l'article</label>
+<textarea id="article-content" placeholder="Écrivez ici votre article (réel ou inventé)."></textarea>
+</div>
+</div>
+</div>
+</div>
+
+<div class="section open">
+<div class="section-header" data-toggle="section-characters">
+<span class="section-title">👥 Personnages <span class="badge" id="chars-count">0</span></span>
+<span class="chevron">▼</span>
+</div>
+<div class="section-body">
+<div class="section-content">
+<div id="characters-list"></div>
+<button type="button" class="btn-add" id="add-char-btn">＋ Ajouter un personnage</button>
+</div>
+</div>
+</div>
+
+<div class="section open">
+<div class="section-header" data-toggle="section-scenes">
+<span class="section-title">🎬 Scènes <span class="badge" id="scenes-count">0</span></span>
+<span class="chevron">▼</span>
+</div>
+<div class="section-body">
+<div class="section-content">
+<div id="scenes-list"></div>
+<button type="button" class="btn-add" id="add-scene-btn">＋ Ajouter une scène</button>
+</div>
+</div>
+</div>
+
+<div class="section open">
+<div class="section-header" data-toggle="section-options">
+<span class="section-title">⚙️ Options</span>
+<span class="chevron">▼</span>
+</div>
+<div class="section-body">
+<div class="section-content">
+<div class="control-row">
+<label class="control-label">Style visuel</label>
+<select id="director-style">
+<option value="retrofuturistic colorful cartoon style" selected>🎨 Rétrofuturiste coloré</option>
+<option value="Wes Anderson style, symmetrical, pastel">🎨 Wes Anderson</option>
+<option value="Kubrick style, symmetrical, dramatic">🎬 Kubrick</option>
+<option value="manga cyberpunk style, neon">🌆 Manga Cyberpunk</option>
+<option value="vintage VHS futuristic style">📼 VHS Futuriste</option>
+<option value="Studio Ghibli style, watercolor">🌿 Studio Ghibli</option>
+<option value="Pixar 3D animation style">✨ Pixar 3D</option>
+</select>
+</div>
+<div class="control-row">
+<label class="control-label">Durée par défaut (secondes)</label>
+<select id="default-duration">
+<option value="5">5 s</option>
+<option value="6" selected>6 s</option>
+<option value="10">10 s</option>
+<option value="15">15 s</option>
+<option value="20">20 s</option>
+<option value="30">30 s</option>
+<option value="60">60 s</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+
+<button type="button" class="btn-primary" id="launch-btn" disabled>📺 Générer le JT</button>
+<button type="button" class="btn-stop" id="stop-btn">⏹ Arrêter</button>
+
+<div class="section" id="gallery-section" style="display:none;">
+<div class="section-header" data-toggle="gallery-section">
+<span class="section-title">📺 Vidéos générées</span>
+<span class="chevron">▼</span>
+</div>
+<div class="section-body" style="max-height:none;">
+<div class="section-content">
+<div class="gallery" id="gallery"></div>
+</div>
+</div>
+</div>
+
+<div class="debug-panel" id="debug-panel"></div>
+<div class="toast" id="toast"></div><script>
+// ══════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════
+const API_BASE='https://apihub.agnes-ai.com/v1';
+const POLL_BASE='https://apihub.agnes-ai.com/agnesapi';
+const MODEL_VIDEO='agnes-video-v2.0';
+const MODEL_IMAGE='agnes-image-2.5-flash';
+const MODEL_TEXT='agnes-2.5-flash';
+const FRAME_RATE=24;
+const API_KEY_STORAGE='newsreel_pro_key';
+
+// ══════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════
+const state={
+    characters:[],
+    scenes:[],
+    scenario:null,
+    videos:[],
+    isRunning:false,
+    stopRequested:false
+};
+
+// ══════════════════════════════════════════════════════════════════
+// LOG DEBUG
+// ══════════════════════════════════════════════════════════════════
+function logDebug(msg,type='info'){
+    const panel=document.getElementById('debug-panel');
+    const line=document.createElement('div');
+    line.className='log-line '+type;
+    line.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+    panel.appendChild(line);
+    panel.scrollTop=panel.scrollHeight;
+    if(panel.children.length>100)panel.removeChild(panel.firstChild);
+    console.log('[NewsReel] '+msg);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════════
+let toastTimeout=null;
+function toast(msg,type='success',duration=2500){
+    const el=document.getElementById('toast');
+    el.textContent=msg;
+    el.className='toast visible '+type;
+    if(toastTimeout)clearTimeout(toastTimeout);
+    toastTimeout=setTimeout(()=>el.className='toast '+type,duration);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// API KEY
+// ══════════════════════════════════════════════════════════════════
+function getKey(){try{return(localStorage.getItem(API_KEY_STORAGE)||'').trim()}catch(e){return''}}
+function saveKey(){
+    const input = document.getElementById('api-key-input');
+    const val = input.value.trim();
+    if(!val){
+        localStorage.removeItem(API_KEY_STORAGE);
+        updateApiStatus();
+        toast('Clé supprimée','warn');
+        return;
+    }
+    try {
+        localStorage.setItem(API_KEY_STORAGE, val);
+        updateApiStatus();
+        toast('Clé enregistrée ✓','success');
+        input.blur();
+    } catch(e) {
+        toast('Erreur lors de la sauvegarde','error');
+    }
+}
+function updateApiStatus(){
+    const key=getKey();
+    const line=document.getElementById('api-status-line');
+    const text=document.getElementById('api-status-text');
+    const input=document.getElementById('api-key-input');
+    if(key){
+        line.classList.add('ok');
+        text.textContent='✓ Clé active · '+key.slice(0,8)+'…'+key.slice(-4);
+        input.value=key;
+    }else{
+        line.classList.remove('ok');
+        text.textContent='Aucune clé enregistrée';
+        input.value='';
+    }
+    updateLaunchBtn();
+}
+document.getElementById('api-save-btn').addEventListener('click',saveKey);
+document.getElementById('api-key-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveKey()}});
+
+// ══════════════════════════════════════════════════════════════════
+// SECTIONS
+// ══════════════════════════════════════════════════════════════════
+document.querySelectorAll('[data-toggle]').forEach(h=>{
+    h.addEventListener('click',()=>{
+        const t=document.getElementById(h.dataset.toggle);
+        if(t)t.classList.toggle('open');
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════
+// TENUES DISPONIBLES
+// ══════════════════════════════════════════════════════════════════
+const OUTFIT_OPTIONS = [
+    { value: 'bureau-strict-noir', label: '🏢 Bureau strict — Chemise blanche + blazer noir', prompt: 'chemise blanche classique, ENTIÈREMENT BOUTONNÉE, dernier bouton attaché, col FERMÉ, cou COUVERT, blazer noir' },
+    { value: 'bureau-strict-bleu', label: '🏢 Bureau strict — Chemise bleue + veste grise', prompt: 'chemise bleu clair, ENTIÈREMENT BOUTONNÉE, col FERMÉ, cou COUVERT, veste grise' },
+    { value: 'bureau-strict-cravate', label: '🏢 Bureau strict — Chemise + cravate noire', prompt: 'chemise blanche, ENTIÈREMENT BOUTONNÉE, col FERMÉ, cou COUVERT, cravate noire serrée' },
+    { value: 'bureau-strict-gilet', label: '🏢 Bureau strict — Chemise + gilet bleu marine', prompt: 'chemise blanche, ENTIÈREMENT BOUTONNÉE, col FERMÉ, cou COUVERT, gilet bleu marine' },
+    { value: 'quotidien-1bouton', label: '🏠 Quotidien — Chemise 1 bouton ouvert', prompt: 'chemise blanche classique, boutonnée, 1 bouton ouvert en haut, col légèrement ouvert, blazer noir' },
+    { value: 'soiree-roule-ferme', label: '🌙 Soirée — Col roulé + gilet zippé FERMÉ', prompt: 'col roulé gris élégant + gilet zippé FERMÉ, look soirée décontracté' },
+    { value: 'weekend-roule-ouvert', label: '🏖️ Week-end — Col roulé + gilet LÉGÈREMENT OUVERT', prompt: 'col roulé beige + gilet zippé LÉGÈREMENT OUVERT, look week-end' },
+    { value: 'decontracte-2boutons', label: '🎉 Décontracté — Chemise 2 boutons ouverts', prompt: 'chemise blanche 2 boutons ouverts, col ouvert, look décontracté élégant' },
+    { value: 'italienne-fermee', label: '👔 Italienne — Chemise italienne double boutonnage fermée', prompt: 'chemise italienne double boutonnage, ENTIÈREMENT BOUTONNÉE, col FERMÉ, cou COUVERT' },
+    { value: 'cravate-windsor', label: '👔 Cravate Windsor — Chemise + cravate parfaitement nouée', prompt: 'chemise blanche, ENTIÈREMENT BOUTONNÉE, col FERMÉ, cou COUVERT, cravate Windsor parfaitement nouée' },
+    { value: 'chemise-carreaux', label: '🔲 Chemise à carreaux — fermée jusqu\'au dernier bouton', prompt: 'chemise à carreaux, ENTIÈREMENT BOUTONNÉE, dernier bouton attaché, col FERMÉ, cou COUVERT' },
+    { value: 'chemise-lin', label: '🌾 Chemise en lin — fermée', prompt: 'chemise en lin beige, ENTIÈREMENT BOUTONNÉE, col FERMÉ, cou COUVERT' },
+    { value: 'chemise-soie', label: '✨ Chemise en soie — fermée', prompt: 'chemise en soie ivoire, ENTIÈREMENT BOUTONNÉE, col FERMÉ, cou COUVERT' },
+    { value: 'autre', label: '👔 Autre (à préciser plus bas)', prompt: '' }
+];
+
+const HAIR_OPTIONS = [
+    'cheveux attachés en chignon bas strict',
+    'cheveux courts bien coiffés',
+    'cheveux mi-longs lisses',
+    'cheveux bouclés disciplinés',
+    'cheveux lâchés ondulés (décontracté)',
+    'cheveux en queue de cheval',
+    'cheveux en tresse',
+    'cheveux courts avec foulard élégant',
+    'cheveux longs avec foulard élégant',
+    'crâne rasé',
+    'cheveux colorés',
+    'autre (à préciser)'
+];
+
+const GENDER_OPTIONS = [
+    'un homme', 'une femme', 'un adolescent', 'une adolescente',
+    'un enfant', 'une enfant', 'une personne âgée'
+];
+
+// ══════════════════════════════════════════════════════════════════
+// PERSONNAGES
+// ══════════════════════════════════════════════════════════════════
+function createCharacter(){
+    return {
+        id: Date.now() + Math.random(),
+        name: '',
+        gender: 'une femme',
+        outfit: 'bureau-strict-noir',
+        outfitCustom: '',
+        hair: 'cheveux attachés en chignon bas strict',
+        hairCustom: '',
+        role: 'chroniqueur'
+    };
+}
+
+function addCharacter(){
+    state.characters.push(createCharacter());
+    renderCharacters();
+    renderScenes();
+}
+
+function removeCharacter(id){
+    state.characters = state.characters.filter(c => c.id !== id);
+    renderCharacters();
+    renderScenes();
+}
+
+function renderCharacters(){
+    const container = document.getElementById('characters-list');
+    const count = document.getElementById('chars-count');
+    count.textContent = state.characters.length;
+    
+    if(!state.characters.length){
+        container.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--ink-dim);font-size:.82rem;">Aucun personnage. Cliquez sur <strong>＋ Ajouter un personnage</strong>.</div>';
+        updateLaunchBtn();
+        return;
+    }
+    
+    container.innerHTML = state.characters.map((c, i) => `
+        <div class="char-block">
+            <div class="char-header">
+                <div class="char-num">${i+1}</div>
+                <input type="text" class="char-name-input" data-char-name="${c.id}" value="${esc(c.name)}" placeholder="Nom du personnage">
+                <button class="char-remove" data-char-remove="${c.id}">✕</button>
+            </div>
+            <div class="control-row">
+                <label class="control-label">Genre / âge</label>
+                <select data-char-gender="${c.id}">
+                    ${GENDER_OPTIONS.map(g => `<option value="${g}" ${c.gender===g?'selected':''}>${g}</option>`).join('')}
+                </select>
+            </div>
+            <div class="control-row">
+                <label class="control-label">Rôle</label>
+                <select data-char-role="${c.id}">
+                    <option value="chroniqueur" ${c.role==='chroniqueur'?'selected':''}>🎤 Chroniqueur plateau</option>
+                    <option value="reporter" ${c.role==='reporter'?'selected':''}>🎥 Reporter terrain</option>
+                    <option value="figurant" ${c.role==='figurant'?'selected':''}>👥 Figurant</option>
+                    <option value="invité" ${c.role==='invité'?'selected':''}>🎙️ Invité</option>
+                    <option value="autre" ${c.role==='autre'?'selected':''}>👤 Autre</option>
+                </select>
+            </div>
+            <div class="control-row">
+                <label class="control-label">Tenue</label>
+                <select data-char-outfit="${c.id}">
+                    ${OUTFIT_OPTIONS.map(o => `<option value="${o.value}" ${c.outfit===o.value?'selected':''}>${o.label}</option>`).join('')}
+                </select>
+            </div>
+            ${c.outfit === 'autre' ? `
+            <div class="control-row">
+                <label class="control-label">Précisez la tenue</label>
+                <input type="text" data-char-outfit-custom="${c.id}" value="${esc(c.outfitCustom)}" placeholder="Ex: robe longue, tailleur, kimono...">
+            </div>` : ''}
+            <div class="control-row">
+                <label class="control-label">Coiffure</label>
+                <select data-char-hair="${c.id}">
+                    ${HAIR_OPTIONS.map(h => `<option value="${h}" ${c.hair===h?'selected':''}>${h}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+    `).join('');
+    
+    container.querySelectorAll('[data-char-name]').forEach(el => {
+        el.addEventListener('input', () => {
+            const c = state.characters.find(c => c.id === parseFloat(el.dataset.charName));
+            if(c) c.name = el.value;
+            updateLaunchBtn();
+        });
+    });
+    container.querySelectorAll('[data-char-gender]').forEach(el => {
+        el.addEventListener('change', () => {
+            const c = state.characters.find(c => c.id === parseFloat(el.dataset.charGender));
+            if(c) c.gender = el.value;
+        });
+    });
+    container.querySelectorAll('[data-char-role]').forEach(el => {
+        el.addEventListener('change', () => {
+            const c = state.characters.find(c => c.id === parseFloat(el.dataset.charRole));
+            if(c) c.role = el.value;
+        });
+    });
+    container.querySelectorAll('[data-char-outfit]').forEach(el => {
+        el.addEventListener('change', () => {
+            const c = state.characters.find(c => c.id === parseFloat(el.dataset.charOutfit));
+            if(c){ c.outfit = el.value; renderCharacters(); }
+        });
+    });
+    container.querySelectorAll('[data-char-outfit-custom]').forEach(el => {
+        el.addEventListener('input', () => {
+            const c = state.characters.find(c => c.id === parseFloat(el.dataset.charOutfitCustom));
+            if(c) c.outfitCustom = el.value;
+        });
+    });
+    container.querySelectorAll('[data-char-hair]').forEach(el => {
+        el.addEventListener('change', () => {
+            const c = state.characters.find(c => c.id === parseFloat(el.dataset.charHair));
+            if(c) c.hair = el.value;
+        });
+    });
+    container.querySelectorAll('[data-char-remove]').forEach(btn => {
+        btn.addEventListener('click', () => removeCharacter(parseFloat(btn.dataset.charRemove)));
+    });
+    
+    updateLaunchBtn();
+}
+
+document.getElementById('add-char-btn').addEventListener('click', addCharacter);
+
+// ══════════════════════════════════════════════════════════════════
+// SCÈNES
+// ══════════════════════════════════════════════════════════════════
+function createScene(){
+    return {
+        id: Date.now() + Math.random(),
+        title: '',
+        location: 'bureau',
+        description: '',
+        duration: 6,
+        dialogues: [],
+        charactersInScene: []
+    };
+}
+
+function addScene(){
+    state.scenes.push(createScene());
+    renderScenes();
+}
+
+function removeScene(id){
+    state.scenes = state.scenes.filter(s => s.id !== id);
+    renderScenes();
+}
+
+function addDialogue(sceneId){
+    const scene = state.scenes.find(s => s.id === sceneId);
+    if(!scene) return;
+    scene.dialogues.push({ charId: '', text: '' });
+    renderScenes();
+}
+
+function removeDialogue(sceneId, index){
+    const scene = state.scenes.find(s => s.id === sceneId);
+    if(!scene) return;
+    scene.dialogues.splice(index, 1);
+    renderScenes();
+}
+
+function toggleCharacterInScene(sceneId, charId){
+    const scene = state.scenes.find(s => s.id === sceneId);
+    if(!scene) return;
+    const idx = scene.charactersInScene.indexOf(charId);
+    if(idx === -1) scene.charactersInScene.push(charId);
+    else scene.charactersInScene.splice(idx, 1);
+    renderScenes();
+}
+
+function renderScenes(){
+    const container = document.getElementById('scenes-list');
+    const count = document.getElementById('scenes-count');
+    count.textContent = state.scenes.length;
+    
+    if(!state.scenes.length){
+        container.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--ink-dim);font-size:.82rem;">Aucune scène. Cliquez sur <strong>＋ Ajouter une scène</strong>.</div>';
+        updateLaunchBtn();
+        return;
+    }
+    
+    container.innerHTML = state.scenes.map((s, i) => `
+        <div class="scene-block">
+            <div class="scene-header">
+                <div class="scene-num">${i+1}</div>
+                <input type="text" class="scene-title-input" data-scene-title="${s.id}" value="${esc(s.title)}" placeholder="Titre de la scène">
+                <button class="scene-remove" data-scene-remove="${s.id}">✕</button>
+            </div>
+            <div class="control-row">
+                <label class="control-label">Lieu</label>
+                <select data-scene-location="${s.id}">
+                    <option value="bureau" ${s.location==='bureau'?'selected':''}>🏢 Bureau</option>
+                    <option value="café" ${s.location==='café'?'selected':''}>☕ Café</option>
+                    <option value="extérieur" ${s.location==='extérieur'?'selected':''}>🌳 Extérieur</option>
+                    <option value="studio" ${s.location==='studio'?'selected':''}>📺 Studio TV</option>
+                    <option value="maison" ${s.location==='maison'?'selected':''}>🏠 Maison</option>
+                    <option value="restaurant" ${s.location==='restaurant'?'selected':''}>🍽️ Restaurant</option>
+                    <option value="rue" ${s.location==='rue'?'selected':''}>🏙️ Rue</option>
+                    <option value="autre" ${s.location==='autre'?'selected':''}>📍 Autre</option>
+                </select>
+            </div>
+            <div class="control-row">
+                <label class="control-label">Description de la scène</label>
+                <textarea data-scene-desc="${s.id}" placeholder="Décrivez ce qui se passe dans cette scène...">${esc(s.description)}</textarea>
+            </div>
+            <div class="control-row">
+                <label class="control-label">Durée (secondes)</label>
+                <input type="number" data-scene-duration="${s.id}" value="${s.duration}" min="5" max="60" step="1">
+            </div>
+            <div class="control-row">
+                <label class="control-label">Personnages présents</label>
+                <div style="display:flex;flex-wrap:wrap;gap:.3rem;">
+                    ${state.characters.length ? state.characters.map(c => `
+                        <button type="button" class="btn-add" style="width:auto;padding:.3rem .6rem;font-size:.7rem;${s.charactersInScene.includes(c.id)?'border-color:var(--retro);color:var(--retro);':''}" data-toggle-char="${s.id}|${c.id}">
+                            ${s.charactersInScene.includes(c.id)?'✓ ':''}${esc(c.name) || 'Personnage '+(state.characters.indexOf(c)+1)}
+                        </button>
+                    `).join('') : '<span style="font-size:.75rem;color:var(--ink-dim);">Aucun personnage créé.</span>'}
+                </div>
+            </div>
+            <div class="control-row">
+                <label class="control-label">Dialogues</label>
+                ${s.dialogues.map((d, di) => `
+                    <div class="dialogue-row">
+                        <select class="dialogue-char" data-dialogue-char="${s.id}|${di}">
+                            <option value="">— Qui parle ? —</option>
+                            ${state.characters.map(c => `<option value="${c.id}" ${d.charId===c.id?'selected':''}>${esc(c.name) || 'Personnage '+(state.characters.indexOf(c)+1)}</option>`).join('')}
+                        </select>
+                        <textarea class="dialogue-text" data-dialogue-text="${s.id}|${di}" placeholder="Texte de la réplique...">${esc(d.text)}</textarea>
+                        <button class="dialogue-remove" data-dialogue-remove="${s.id}|${di}">✕</button>
+                    </div>
+                `).join('')}
+                <button type="button" class="btn-add" data-add-dialogue="${s.id}">＋ Ajouter une réplique</button>
+            </div>
+        </div>
+    `).join('');
+    
+    container.querySelectorAll('[data-scene-title]').forEach(el => {
+        el.addEventListener('input', () => {
+            const s = state.scenes.find(s => s.id === parseFloat(el.dataset.sceneTitle));
+            if(s) s.title = el.value;
+            updateLaunchBtn();
+        });
+    });
+    container.querySelectorAll('[data-scene-location]').forEach(el => {
+        el.addEventListener('change', () => {
+            const s = state.scenes.find(s => s.id === parseFloat(el.dataset.sceneLocation));
+            if(s) s.location = el.value;
+        });
+    });
+    container.querySelectorAll('[data-scene-desc]').forEach(el => {
+        el.addEventListener('input', () => {
+            const s = state.scenes.find(s => s.id === parseFloat(el.dataset.sceneDesc));
+            if(s) s.description = el.value;
+        });
+    });
+    container.querySelectorAll('[data-scene-duration]').forEach(el => {
+        el.addEventListener('input', () => {
+            const s = state.scenes.find(s => s.id === parseFloat(el.dataset.sceneDuration));
+            if(s) s.duration = parseInt(el.value, 10) || 6;
+        });
+    });
+    container.querySelectorAll('[data-toggle-char]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const [sceneId, charId] = btn.dataset.toggleChar.split('|');
+            toggleCharacterInScene(parseFloat(sceneId), parseFloat(charId));
+        });
+    });
+    container.querySelectorAll('[data-dialogue-char]').forEach(el => {
+        el.addEventListener('change', () => {
+            const [sceneId, di] = el.dataset.dialogueChar.split('|');
+            const scene = state.scenes.find(s => s.id === parseFloat(sceneId));
+            if(scene) scene.dialogues[parseInt(di, 10)].charId = el.value;
+        });
+    });
+    container.querySelectorAll('[data-dialogue-text]').forEach(el => {
+        el.addEventListener('input', () => {
+            const [sceneId, di] = el.dataset.<script>
+// ══════════════════════════════════════════════════════════════════
+// RÉCUPÉRER UN PERSONNAGE
+// ══════════════════════════════════════════════════════════════════
+function getCharacterById(id){
+    return state.characters.find(c => c.id === id);
+}
+
+function getCharacterDescription(char){
+    const outfit = OUTFIT_OPTIONS.find(o => o.value === char.outfit);
+    const outfitPrompt = outfit && outfit.value !== 'autre' ? outfit.prompt : (char.outfitCustom || 'tenue classique');
+    const hair = char.hair === 'autre (à préciser)' ? (char.hairCustom || 'coiffure classique') : char.hair;
+    return char.gender + ', ' + outfitPrompt + ', ' + hair;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GÉNÉRATION DU SCÉNARIO
+// ══════════════════════════════════════════════════════════════════
+async function generateScenario(){
+    const title = document.getElementById('article-title').value.trim();
+    const content = document.getElementById('article-content').value.trim();
+    if(!title || !content) throw new Error('Article incomplet');
+    
+    const style = document.getElementById('director-style').value;
+    
+    const charactersDesc = state.characters.map((c, i) => {
+        return '- Personnage ' + (i+1) + ' : ' + (c.name || 'Sans nom') + ' (rôle : ' + c.role + ', ' + getCharacterDescription(c) + ')';
+    }).join('\n');
+    
+    const scenesDesc = state.scenes.map((s, i) => {
+        const charsInScene = s.charactersInScene.map(cid => {
+            const c = getCharacterById(cid);
+            return c ? (c.name || 'Personnage ' + (state.characters.indexOf(c) + 1)) : '';
+        }).filter(Boolean).join(', ');
+        
+        const dialoguesText = s.dialogues.map(d => {
+            const c = getCharacterById(d.charId);
+            const charName = c ? (c.name || 'Personnage ' + (state.characters.indexOf(c) + 1)) : 'Quelqu\'un';
+            return charName + ' : "' + d.text + '"';
+        }).join('\n');
+        
+        return 'SCÈNE ' + (i+1) + ' — "' + (s.title || 'Sans titre') + '"\n' +
+            'Lieu : ' + s.location + '\n' +
+            'Description : ' + s.description + '\n' +
+            'Personnages présents : ' + (charsInScene || 'à définir') + '\n' +
+            'Durée : ' + s.duration + ' secondes\n' +
+            'Dialogues :\n' + (dialoguesText || '(aucun dialogue)');
+    }).join('\n\n');
+    
+    const prompt = 'Tu es un scénariste de JT satirique. Transforme cet article et ces scènes en un scénario de journal télévisé comique.\n\n' +
+        'ARTICLE :\nTitre : ' + title + '\nContenu : ' + content + '\n\n' +
+        'STYLE VISUEL : ' + style + '\n\n' +
+        'PERSONNAGES DE L\'ÉQUIPE :\n' + charactersDesc + '\n\n' +
+        'SCÈNES À METTRE EN SCÈNE :\n' + scenesDesc + '\n\n' +
+        'INSTRUCTIONS :\n' +
+        '- Respecte EXACTEMENT les personnages et leurs tenues\n' +
+        '- Respecte EXACTEMENT les scènes, lieux, durées et dialogues\n' +
+        '- Pour chaque scène, génère un "prompt_image" et un "prompt_video"\n' +
+        '- Reste fidèle au ton satirique et comique\n\n' +
+        'Réponds UNIQUEMENT en JSON valide :\n' +
+        '{"titre":"' + title + '","scenes":[{"scene_number":1,"title":"...","location":"...","duration":6,"description":"...","prompt_image":"...","prompt_video":"...","dialogues":[{"character":"nom","text":"..."}]}]}';
+
+    const res = await fetch(API_BASE + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + getKey(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            model: MODEL_TEXT,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.8,
+            max_tokens: 4000
+        })
+    });
+    
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || '';
+    
+    let json = text;
+    const match = text.match(/\{[\s\S]*\}/);
+    if(match) json = match[0];
+    
+    try {
+        state.scenario = JSON.parse(json);
+        logDebug('Scénario généré (' + state.scenario.scenes.length + ' scènes)', 'success');
+    } catch(e) {
+        logDebug('Fallback scénario local', 'warn');
+        state.scenario = {
+            titre: title,
+            scenes: state.scenes.map((s, i) => {
+                const charsInScene = s.charactersInScene.map(cid => getCharacterById(cid)).filter(Boolean);
+                return {
+                    scene_number: i + 1,
+                    title: s.title,
+                    location: s.location,
+                    duration: s.duration,
+                    description: s.description,
+                    prompt_image: 'Scene ' + (i+1) + ' : ' + s.description + ', ' + style + ', personnages : ' + charsInScene.map(c => getCharacterDescription(c)).join(' | '),
+                    prompt_video: 'Motion subtle, ' + s.description,
+                    dialogues: s.dialogues.map(d => {
+                        const c = getCharacterById(d.charId);
+                        return { character: c ? c.name : 'Personnage', text: d.text };
+                    })
+                };
+            })
+        };
+    }
+    return state.scenario;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GÉNÉRATION D'IMAGE
+// ══════════════════════════════════════════════════════════════════
+async function generateImage(prompt){
+    try {
+        logDebug('Image en cours…');
+        const res = await fetch(API_BASE + '/images/generations', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + getKey(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: MODEL_IMAGE,
+                prompt: prompt + ', 9:16 portrait, colorful, highly detailed',
+                n: 1,
+                size: '768x1344'
+            })
+        });
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const url = data.data?.[0]?.url || data.url || null;
+        if(url) logDebug('Image OK', 'success');
+        return url;
+    } catch(e) {
+        logDebug('Erreur image : ' + e.message, 'warn');
+        return null;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PROMPT IMAGE PAR SCÈNE
+// ══════════════════════════════════════════════════════════════════
+function buildSceneImagePrompt(scene, index){
+    const charsInScene = state.scenes[index].charactersInScene.map(cid => getCharacterById(cid)).filter(Boolean);
+    const charsDesc = charsInScene.length 
+        ? 'Characters: ' + charsInScene.map(c => getCharacterDescription(c)).join(' AND ')
+        : '';
+    
+    const dialoguesText = scene.dialogues.map(d => {
+        const c = getCharacterById(d.charId);
+        return (c ? c.name : 'Personnage') + ' dit : "' + d.text + '"';
+    }).join(' / ');
+    
+    return scene.description + '. ' + charsDesc + '. ' + (dialoguesText ? 'Dialogues : ' + dialoguesText + '. ' : '') + 'Location : ' + scene.location + '.';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GÉNÉRER TOUTES LES IMAGES
+// ══════════════════════════════════════════════════════════════════
+async function generateAllImages(){
+    const style = document.getElementById('director-style').value;
+    const images = [];
+    
+    for(let i = 0; i < state.scenes.length; i++){
+        if(state.stopRequested) break;
+        const scene = state.scenes[i];
+        
+        let prompt;
+        if(state.scenario && state.scenario.scenes[i] && state.scenario.scenes[i].prompt_image){
+            prompt = state.scenario.scenes[i].prompt_image + ', ' + style;
+        } else {
+            prompt = buildSceneImagePrompt(scene, i) + ' ' + style;
+        }
+        
+        logDebug('Image scène ' + (i+1) + '/' + state.scenes.length + '…');
+        const img = await generateImage(prompt);
+        images.push({ sceneIndex: i, url: img });
+        
+        if(i < state.scenes.length - 1) await sleep(3000);
+    }
+    
+    return images;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SLEEP
+// ══════════════════════════════════════════════════════════════════
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+</script><script>
+// ══════════════════════════════════════════════════════════════════
+// CRÉATION TÂCHE VIDÉO
+// ══════════════════════════════════════════════════════════════════
+async function createVideoTask(prompt, imageUrl, durationSec){
+    const numFrames = Math.round(durationSec * FRAME_RATE) + 1;
+    const validFrames = [121, 153, 241, 361, 481, 601, 721, 841, 961, 1081, 1201, 1321, 1441];
+    let frames = 153;
+    for(const f of validFrames){
+        if(f <= numFrames) frames = f;
+    }
+    
+    const body = {
+        model: MODEL_VIDEO,
+        prompt: prompt,
+        num_frames: frames,
+        frame_rate: FRAME_RATE
+    };
+    if(imageUrl) body.image = imageUrl;
+    
+    logDebug('Création tâche vidéo (' + frames + ' frames)…');
+    const res = await fetch(API_BASE + '/videos', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + getKey(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if(!res.ok){
+        const err = await res.text();
+        throw new Error('HTTP ' + res.status + ' — ' + err.slice(0, 150));
+    }
+    const data = await res.json();
+    const id = data.video_id || data.id || data.task_id;
+    if(!id) throw new Error('Pas d\'ID retourné');
+    logDebug('Tâche créée : ' + String(id).slice(0, 20) + '…', 'success');
+    return id;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// POLLING VIDÉO
+// ══════════════════════════════════════════════════════════════════
+async function pollVideo(videoId, onProgress){
+    logDebug('Attente 20s avant polling…');
+    await sleep(20000);
+    for(let i = 0; i < 60; i++){
+        if(state.stopRequested) throw new Error('Arrêt');
+        try {
+            const url = POLL_BASE + '?video_id=' + encodeURIComponent(videoId) + '&model_name=' + encodeURIComponent(MODEL_VIDEO);
+            const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + getKey() } });
+            const d = await res.json();
+            const status = d.status || 'unknown';
+            const progress = d.progress || 0;
+            if(onProgress) onProgress('En cours… ' + progress + '%');
+            if(status === 'completed' || status === 'succeeded' || status === 'done'){
+                const u = (d.metadata && d.metadata.url) || d.url || (d.output && d.output.url);
+                if(!u) throw new Error('Pas d\'URL');
+                logDebug('Vidéo terminée ✓', 'success');
+                return u;
+            }
+            if(status === 'failed' || status === 'error' || status === 'cancelled'){
+                throw new Error('Échec (' + status + ')');
+            }
+            logDebug('En cours… (' + (i+1) + '/60)');
+            await sleep(8000);
+        } catch(e) {
+            if(e.message === 'Arrêt') throw e;
+            logDebug('Polling erreur : ' + e.message, 'warn');
+            await sleep(8000);
+        }
+    }
+    throw new Error('Timeout');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AJOUT GALERIE
+// ══════════════════════════════════════════════════════════════════
+function addVideoToGallery(url, label){
+    state.videos.push({ url, label });
+    const g = document.getElementById('gallery');
+    const el = document.createElement('div');
+    el.className = 'gallery-item';
+    el.innerHTML = '<video controls preload="metadata" playsinline><source src="' + url + '" type="video/mp4"></video><div class="caption">' + esc(label) + '</div>';
+    g.appendChild(el);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LANCER LE JT
+// ══════════════════════════════════════════════════════════════════
+async function launchJT(){
+    if(state.isRunning) return;
+    if(!getKey()){ toast('Clé API requise', 'error'); return; }
+    
+    const title = document.getElementById('article-title').value.trim();
+    const content = document.getElementById('article-content').value.trim();
+    if(!title || !content){ toast('Écrivez un article complet', 'error'); return; }
+    if(!state.characters.length){ toast('Ajoutez au moins un personnage', 'error'); return; }
+    if(!state.scenes.length){ toast('Ajoutez au moins une scène', 'error'); return; }
+    
+    state.isRunning = true;
+    state.stopRequested = false;
+    state.videos = [];
+    
+    document.getElementById('launch-btn').disabled = true;
+    document.getElementById('stop-btn').classList.add('visible');
+    document.getElementById('gallery-section').style.display = 'none';
+    document.getElementById('gallery').innerHTML = '';
+    document.getElementById('debug-panel').classList.add('visible');
+    
+    try {
+        toast('✍️ Génération du scénario…');
+        logDebug('════════ ÉTAPE 1 : SCÉNARIO ════════');
+        await generateScenario();
+        if(state.stopRequested) throw new Error('Arrêt');
+        
+        toast('🎨 Génération des images…');
+        logDebug('════════ ÉTAPE 2 : IMAGES ════════');
+        const images = await generateAllImages();
+        if(state.stopRequested) throw new Error('Arrêt');
+        
+        logDebug('════════ ÉTAPE 3 : VIDÉOS ════════');
+        document.getElementById('gallery-section').style.display = 'block';
+        
+        for(let i = 0; i < state.scenes.length; i++){
+            if(state.stopRequested) break;
+            const scene = state.scenes[i];
+            const image = images[i];
+            
+            if(!image || !image.url){
+                logDebug('Scène ' + (i+1) + ' sans image, on saute', 'warn');
+                continue;
+            }
+            
+            toast('🎬 Vidéo ' + (i+1) + '/' + state.scenes.length + '…');
+            logDebug('Vidéo scène ' + (i+1) + ' : ' + scene.title);
+            
+            try {
+                const videoPrompt = (state.scenario && state.scenario.scenes[i] && state.scenario.scenes[i].prompt_video) 
+                    ? state.scenario.scenes[i].prompt_video 
+                    : 'Subtle movement, breathing, slight motion, cinematic';
+                const vidId = await createVideoTask(videoPrompt, image.url, scene.duration);
+                const vidUrl = await pollVideo(vidId, (p) => logDebug('Scène ' + (i+1) + ' : ' + p));
+                addVideoToGallery(vidUrl, 'Scène ' + (i+1) + ' — ' + scene.title);
+                logDebug('Vidéo scène ' + (i+1) + ' OK', 'success');
+            } catch(e) {
+                logDebug('Vidéo scène ' + (i+1) + ' échouée : ' + e.message, 'error');
+            }
+            
+            if(i < state.scenes.length - 1){
+                logDebug('Attente 70s avant la prochaine vidéo…');
+                for(let r = 70; r > 0; r--){
+                    if(state.stopRequested) break;
+                    logDebug('Prochaine scène dans ' + r + 's');
+                    await sleep(1000);
+                }
+            }
+        }
+        
+        toast('✓ JT terminé !', 'success', 4000);
+        logDebug('════════ JT TERMINÉ ════════', 'success');
+        
+    } catch(e) {
+        if(e.message === 'Arrêt'){
+            toast('Arrêté', 'warn');
+            logDebug('Arrêt demandé', 'warn');
+        } else {
+            toast('Erreur : ' + e.message, 'error', 4000);
+            logDebug('Erreur : ' + e.message, 'error');
+        }
+    }
+    
+    state.isRunning = false;
+    state.stopRequested = false;
+    document.getElementById('launch-btn').disabled = false;
+    document.getElementById('stop-btn').classList.remove('visible');
+    updateLaunchBtn();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BOUTONS
+// ══════════════════════════════════════════════════════════════════
+document.getElementById('launch-btn').addEventListener('click', launchJT);
+document.getElementById('stop-btn').addEventListener('click', () => {
+    state.stopRequested = true;
+    logDebug('Arrêt demandé', 'warn');
+});
+
+// ══════════════════════════════════════════════════════════════════
+// INIT FINAL
+// ══════════════════════════════════════════════════════════════════
+(function initFinal(){
+    updateApiStatus();
+    updateLaunchBtn();
+    logDebug('NewsReel Studio Pro prêt', 'success');
+})();
+</script>
+</body>
+</html>
